@@ -1,0 +1,196 @@
+Sub StockMktAnalysis():
+
+'Variable to keep track of the last row in each worksheet:
+Dim lastRow As Long
+
+'Variable to keep track of current ticker name(symbol):
+Dim TickerName As String
+
+'Variable to hold the ticker count (row#) for each worksheet
+Dim TickerCount As Integer
+
+'Variable to hold opening price
+Dim OpeningPrice As Double
+
+'Variables to hold ClosingPrice, YearlyChange, PercentChange, and TotalStockVolume
+Dim ClosingPrice As Double
+Dim YearlyChange As Double
+Dim PercentChange As Double
+Dim TotalStockVolume As Double
+
+'Variables for challenge section:
+Dim GreatestIncreaseTicker As String
+Dim GreatestDecreaseTicker As String
+Dim GreatestVolumeTicker As String
+Dim GreatestIncreaseValue As Double
+Dim GreatestDecreaseValue As Double
+Dim GreatestVolumeValue As Double
+
+'LOOP THROUGH EACH WORKSHEET IN WORKBOOK:
+For Each ws In Worksheets
+
+    'Make the worksheet active:
+    ws.Activate
+
+    'Get last row of each worksheet:
+    lastRow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+
+    'Add header labels for each worksheet
+    ws.Cells(1, 9).Value = "TickerList"
+    ws.Cells(1, 10).Value = "YearlyChange"
+    ws.Cells(1, 11).Value = "PercentChange"
+    ws.Cells(1, 12).Value = "TotalStockVolume"
+    ws.Cells(2, 14).Value = "Greatest % Increase"
+    ws.Cells(3, 14).Value = "Greatest % Decrease"
+    ws.Cells(4, 14).Value = "Greatest Total Volume"
+    ws.Cells(1, 15).Value = "Ticker"
+    ws.Cells(1, 16).Value = "Value"
+    
+    Columns("N:N").HorizontalAlignment = xlRight
+    
+    'Initialize variable values for each worksheet:
+    TickerName = ""
+    TickerCount = 0
+    OpeningPrice = 0
+    YearlyChange = 0
+    PercentChange = 0
+    TotalStockVolume = 0
+    
+    
+    'Skip header row, Now LOOP through the list of ticker names in Column A:
+    For i = 2 To lastRow
+        TickerName = Cells(i, 1).Value
+        
+        'Calculate PercentChange for each Ticker
+            If OpeningPrice = 0 Then
+                OpeningPrice = Cells(i, 3).Value
+                
+            End If
+            
+            
+        'Add up the total stock vol:
+         TotalStockVolume = TotalStockVolume + Cells(i, 7).Value
+               
+        'If we get to a new TickerName in the list the name gets added to summary column I ("TickerList"):
+        If Cells(i + 1, 1).Value <> TickerName Then
+            TickerCount = TickerCount + 1
+            Cells(TickerCount + 1, 9) = TickerName
+        
+    
+            ClosingPrice = Cells(i, 6)
+        
+            YearlyChange = ClosingPrice - OpeningPrice
+
+            'Add yearly change to the right cell in each worksheet:
+            Cells(TickerCount + 1, 10).Value = YearlyChange
+            
+            'Highlight cells to indicate positive or negative percent change
+            If YearlyChange < 0 Then
+                Cells(TickerCount + 1, 10).Interior.ColorIndex = 3
+    
+            ElseIf YearlyChange > 0 Then
+                Cells(TickerCount + 1, 10).Interior.ColorIndex = 4
+    
+            Else
+                Cells(TickerCount + 1, 10).Interior.ColorIndex = 0
+    
+            End If
+               
+            
+        If OpeningPrice = 0 Then
+            PercentChange = 0
+            
+        Else
+            PercentChange = (YearlyChange / OpeningPrice)
+            
+        End If
+                  
+        Cells(TickerCount + 1, 11).Value = Format(PercentChange, "Percent")
+        'Format change as percent
+        
+        
+        'Set opening price back to 0 when we get to a new ticker:
+        OpeningPrice = 0
+        
+        'Add total stock volume value to the correct cell in each ws:
+        Cells(TickerCount + 1, 12).Value = TotalStockVolume
+                        
+                       
+        'Set TotalStockVolume back to 0 when we get to a new ticker
+        TotalStockVolume = 0
+            
+    End If
+
+    Next i
+    
+    'Get last row of Unique Ticker Names
+    lastSummaryRow = ws.Cells(Rows.Count, "I").End(xlUp).Row
+    
+    'Initialize Summary Values:
+    GreatestIncreaseValue = Cells(2, 11).Value
+    GreatestIncreaseTicker = Cells(2, 9).Value
+    GreatestDecreaseValue = Cells(2, 11).Value
+    GreatestDecreaseTicker = Cells(2, 9).Value
+    GreatestVolumeValue = Cells(2, 12).Value
+    GreatestVolumeTicker = Cells(2, 9).Value
+    
+    'Now LOOP through then Tickers in the Summary Column:
+    For i = 2 To lastSummaryRow
+    
+        If Cells(i, 11).Value > GreatestIncreaseValue Then
+            GreatestIncreaseValue = Cells(i, 11).Value
+            GreatestIncreaseTicker = Cells(i, 9).Value
+        End If
+        
+        If Cells(i, 11).Value < GreatestDecreaseValue Then
+            GreatestDecreaseValue = Cells(i, 11).Value
+            GreatestDecreaseTicker = Cells(i, 9).Value
+        End If
+        
+        
+        If Cells(i, 12).Value > GreatestVolumeValue Then
+            GreatestVolumeValue = Cells(i, 12).Value
+            
+            GreatestVolumeTicker = Cells(i, 9).Value
+        End If
+        
+    Next i
+        
+    Range("O2").Value = GreatestIncreaseTicker
+    Range("P2").Value = GreatestIncreaseValue
+    Range("O3").Value = GreatestDecreaseTicker
+    Range("P3").Value = GreatestDecreaseValue
+    Range("O4").Value = GreatestVolumeTicker
+    Range("P4").Value = GreatestVolumeValue
+    
+    ws.Range("A1:P1").Select
+    Selection.Font.Bold = True
+    
+    ws.Range("N2:N4").Select
+    Selection.Font.Bold = True
+    
+    ws.Range("P1").Select
+    Selection.HorizontalAlignment = xlRight
+     
+    Dim rng1 As Range
+    Dim rng2 As Range
+    For Each rng1 In Range("A1:P1")
+        rng1.Value = UCase(rng1.Value)
+    Next rng1
+    
+    For Each rng2 In Range("N2:N4")
+        rng2.Value = UCase(rng2.Value)
+    Next rng2
+    
+    ws.Range("A:P").Columns.AutoFit
+    
+  'Repeat for next worksheet in workbook:
+  Next ws
+    
+End Sub
+
+
+
+
+
+
